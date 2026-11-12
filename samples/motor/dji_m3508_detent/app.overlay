@@ -1,0 +1,40 @@
+// DJI M3508 棘轮(detent)手感示例 - RoboMaster Board C设备树配置
+// 注意: m3508_motor 的 id 必须与电机电调指示灯的闪烁次数一致，
+// 同时 rx_id = 0x200 + id；id 为 1-4 时 tx_id = 0x200，5-8 时为 0x1FF。
+
+/ {
+    // 速度环(内环): 输出为电流/扭矩目标，out_max 限制回弹力度
+    speed_pid_m3508: speed_pid_m3508 {
+        compatible = "motor-controller,vo";
+        target = "speed";
+        k_p = "8";
+        k_i = "0.5";
+        k_d = "0.1";
+        out_max = "2";
+    };
+
+    // 位置环(外环): out_max 限制回弹速度(rpm)，越小越“软”
+    angle_pid_m3508: angle_pid_m3508 {
+        compatible = "motor-controller,pv";
+        pos_k_p = "10";
+        pos_k_i = "0";
+        pos_k_d = "2";
+        vel_k_p = "8";
+        vel_k_i = "0.5";
+        vel_k_d = "0.1";
+        out_max = "30";
+    };
+
+    m3508_motor: m3508_motor {
+        compatible = "dji,motor";
+        is_m3508;
+        id = <1>;
+        rx_id = <0x201>;
+        tx_id = <0x200>;
+        gear_ratio = "19.20";
+        status = "okay";
+        can_channel = <&can1>;
+        // 应当保持外环在前，内环在后
+        controllers = <&angle_pid_m3508 &speed_pid_m3508>;
+    };
+};
